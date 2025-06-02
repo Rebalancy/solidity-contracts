@@ -1,0 +1,5 @@
+TokenMessengerV2: 0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa
+
+MessageTransmitterV2: 0xe737e5cebeeba77efe34d4aa090756590b1ce275
+
+TokenMinterV2: 0xb43db544e2c27092c107639ad201b3defabcf192
