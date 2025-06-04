@@ -7,7 +7,7 @@ import {DeploymentUtils} from "@utils/DeploymentUtils.sol";
 
 import {Configuration} from "./Configuration.sol";
 
-library ConfigurationBaseSepolia {
+library ConfigurationLocal {
     using DeploymentUtils for Vm;
 
     function getConfig(Vm _vm) external view returns (Configuration.ConfigValues memory) {
@@ -16,7 +16,7 @@ library ConfigurationBaseSepolia {
 
         return Configuration.ConfigValues({
             UNDERLYING_TOKEN: mockUSDC, // Mock USDC address from deployment
-            AGENT_ADDRESS: 0x23BF95De9F90338F973056351C8Cd2CB78cbe52f,
+            AGENT_ADDRESS: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
             VAULT_NAME: "Aave Rebalancer",
             VAULT_SYMBOL: "AAVE-RB"
         });

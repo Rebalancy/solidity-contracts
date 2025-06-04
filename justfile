@@ -4,11 +4,11 @@ set export
 # deployments
 deploy_aave_vault JSON_RPC_URL SENDER:
     echo "Deploying Aave Vault"
-    forge script script/001_deploy_aave_vault.s.sol:DeployAaveVaultScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi --verify -vvvv
+    forge script script/001_deploy_aave_vault.s.sol:DeployAaveVaultScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
 
 deploy_mock_usdc JSON_RPC_URL SENDER:
     echo "Deploying MockUSDC"
-    forge script script/000_deploy_mock_usdc.s.sol:DeployMockUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi --verify -vvvv
+    forge script script/000_deploy_mock_usdc.s.sol:DeployMockUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
 
 deploy_local:
     echo "Deploying contracts locally"
@@ -18,6 +18,7 @@ deploy_local:
 deploy_base_sepolia:
     echo "Deploying contracts to Base Sepolia"
     NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just deploy_mock_usdc $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
+    sleep 10
     NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just deploy_aave_vault $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
     
 # anvil

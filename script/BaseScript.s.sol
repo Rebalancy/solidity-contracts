@@ -15,14 +15,16 @@ contract BaseScript is Script {
     address internal deployer;
 
     constructor() {
-        console2.log("Loading Network Configuration");
-        string memory networkId = vm.envString("NETWORK_ID");
-
-        config = Configuration.load(networkId);
-        console2.log("Network Configuration Loaded Correctly");
-
+        console2.log("BaseScript Constructor: Loading Deployer Address");
+        
         deployer = vm.loadDeployerAddress();
 
         console2.log("Deployer Address: %s", deployer);
+    }
+
+    function _loadConfiguration() internal {
+        console2.log("Loading Network Configuration");
+        config = Configuration.load(vm);
+        console2.log("Network Configuration Loaded Correctly");
     }
 }

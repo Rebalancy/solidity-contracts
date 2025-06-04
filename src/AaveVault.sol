@@ -86,6 +86,7 @@ contract AaveVault is ERC4626 {
     }
 
     modifier onlyAIAgent() {
+        // TODO: Replace with if and revert instead of require
         require(msg.sender == AI_AGENT, "Only AI agent can call this function");
         _;
     }

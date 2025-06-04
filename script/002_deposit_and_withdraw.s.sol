@@ -6,25 +6,27 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {DeploymentUtils} from "@utils/DeploymentUtils.sol";
 import {DeployerUtils} from "@utils/DeployerUtils.sol";
-import {Constants} from "@constants/Constants.sol";
-import {MockUSDC} from "@mocks/MockUSDC.sol";
+
 import {BaseScript} from "./BaseScript.s.sol";
 
-contract DeployMockUSDCScript is BaseScript {
+contract DepositAndWithdrawScript is BaseScript {
     using DeployerUtils for Vm;
     using DeploymentUtils for Vm;
 
-    MockUSDC public mockUSDC;
+    constructor() BaseScript() {
+        _loadConfiguration();
+    }
 
     function run() public {
-        console2.log("Deploying MockUSDC contract");
+        console2.log("Deposit and Withdraw Script");
 
         vm.startBroadcast(deployer);
 
-        mockUSDC = new MockUSDC();
+        // TODO: Implement deposit and withdraw logic
+        // Assuming MockUSDC is already deployed and its address is saved
+        address mockUSDCAddress = vm.loadDeploymentAddress("MockUSDC");
+        require(mockUSDCAddress != address(0), "MockUSDC not deployed");
 
         vm.stopBroadcast();
-
-        vm.saveDeploymentAddress(Constants.MOCK_USDC, address(mockUSDC));
     }
 }

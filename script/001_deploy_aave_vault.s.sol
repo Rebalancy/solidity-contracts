@@ -8,6 +8,7 @@ import {IERC20Metadata} from "@openzeppelin/token/ERC20/extensions/IERC20Metadat
 
 import {DeploymentUtils} from "@utils/DeploymentUtils.sol";
 import {DeployerUtils} from "@utils/DeployerUtils.sol";
+import {Constants} from "@constants/Constants.sol";
 
 import {AaveVault} from "../src/AaveVault.sol";
 import {BaseScript} from "./BaseScript.s.sol";
@@ -17,6 +18,10 @@ contract DeployAaveVaultScript is BaseScript {
     using DeploymentUtils for Vm;
 
     AaveVault public aaveVault;
+
+    constructor() BaseScript() {
+        _loadConfiguration();
+    }
 
     function run() public {
         console2.log("Deploying AaveVault contract");
@@ -32,6 +37,6 @@ contract DeployAaveVaultScript is BaseScript {
 
         vm.stopBroadcast();
 
-        vm.saveDeploymentAddress("AaveVault", address(aaveVault));
+        vm.saveDeploymentAddress(Constants.AAVE_VAULT, address(aaveVault));
     }
 }
