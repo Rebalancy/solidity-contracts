@@ -55,3 +55,9 @@ format:
 format-check:
     echo "Checking contract formatting"
     forge fmt --check
+
+# export abis
+export_abis:
+    mkdir -p abis
+    jq '.abi' out/AaveVault.sol/AaveVault.json > abis/AaveVault.abi.json
+    jq '.abi' out/MockUSDC.sol/MockUSDC.json > abis/MockUSDC.abi.json
