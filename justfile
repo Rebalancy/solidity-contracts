@@ -45,3 +45,12 @@ test CONTRACT:
 
 test_only CONTRACT TEST:
     forge test --mc {{CONTRACT}} --mt {{TEST}} --rpc-url $RPC_URL_ETHEREUM_MAINNET --ffi -vvvv
+
+# formatting
+format: 
+    echo "Formatting contracts"
+    forge fmt
+
+format-check:
+    echo "Checking contract formatting"
+    forge fmt --check

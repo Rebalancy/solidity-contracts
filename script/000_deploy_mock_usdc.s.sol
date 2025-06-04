@@ -7,7 +7,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {DeploymentUtils} from "@utils/DeploymentUtils.sol";
 import {DeployerUtils} from "@utils/DeployerUtils.sol";
 
-import { MockUSDC } from "@mocks/MockUSDC.sol";
+import {MockUSDC} from "@mocks/MockUSDC.sol";
 import {BaseScript} from "./BaseScript.s.sol";
 
 contract DeployMockUSDCScript is BaseScript {
