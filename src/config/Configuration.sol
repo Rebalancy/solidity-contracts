@@ -8,7 +8,6 @@ library Configuration {
 
     struct ConfigValues {
         address UNDERLYING_TOKEN;
-        address AAVE_USDC_LENDING_POOL_ADDRESS;
         address AGENT_ADDRESS;
         string VAULT_NAME;
         string VAULT_SYMBOL;

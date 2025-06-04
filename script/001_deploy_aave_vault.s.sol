@@ -12,7 +12,7 @@ import {DeployerUtils} from "@utils/DeployerUtils.sol";
 import {AaveVault} from "../src/AaveVault.sol";
 import {BaseScript} from "./BaseScript.s.sol";
 
-contract DeployScript is BaseScript {
+contract DeployAaveVaultScript is BaseScript {
     using DeployerUtils for Vm;
     using DeploymentUtils for Vm;
 

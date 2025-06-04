@@ -1,5 +1,10 @@
-TokenMessengerV2: 0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.28;
 
-MessageTransmitterV2: 0x81D40F21F12A8F0E3252Bccb954D722d4c464B64
+import {Configuration} from "./Configuration.sol";
 
-TokenMinterV2: 0xfd78EE919681417d192449715b2594ab58f5D002
+library ConfigurationEthereumMainnet {
+    function getConfig() external pure returns (Configuration.ConfigValues memory) {
+        revert("ConfigurationEthereumMainnet: not implemented");
+    }
+}

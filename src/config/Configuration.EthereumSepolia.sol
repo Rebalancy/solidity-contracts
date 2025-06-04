@@ -1,5 +1,10 @@
-TokenMessengerV2: 0x8fe6b999dc680ccfdd5bf7eb0974218be2542daa
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.28;
 
-MessageTransmitterV2: 0xe737e5cebeeba77efe34d4aa090756590b1ce275
+import {Configuration} from "./Configuration.sol";
 
-TokenMinterV2: 0xb43db544e2c27092c107639ad201b3defabcf192
+library ConfigurationEthereumSepolia {
+    function getConfig() external pure returns (Configuration.ConfigValues memory) {
+        revert("ConfigurationEthereumSepolia: not implemented");
+    }
+}

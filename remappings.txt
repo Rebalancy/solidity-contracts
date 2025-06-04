@@ -2,3 +2,4 @@
 forge-std/=dependencies/forge-std-1.9.6/src
 @utils/=src/utils/
 @config/=src/config/
+@mocks/=src/mocks/

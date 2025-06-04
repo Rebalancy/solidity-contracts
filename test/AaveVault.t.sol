@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.28;
 
+import {Test, console} from "forge-std/Test.sol";
+
 import {IERC20Errors} from "@openzeppelin/interfaces/draft-IERC6093.sol";
 import {ERC4626} from "@openzeppelin/token/ERC20/extensions/ERC4626.sol";
-import {Test, console} from "forge-std/Test.sol";
+
 import {AaveVault} from "../src/AaveVault.sol";
-import {MockUSDC} from "./utils/MockUSDC.sol";
+import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 
 contract AaveVaultTest is Test {
     AaveVault public aaveVault;
