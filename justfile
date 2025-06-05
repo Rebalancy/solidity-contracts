@@ -4,11 +4,11 @@ set export
 # deployments
 deploy_aave_vault JSON_RPC_URL SENDER:
     echo "Deploying Aave Vault"
-    forge script script/001_deploy_aave_vault.s.sol:DeployAaveVaultScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+    forge script script/001_deploy_aave_vault.s.sol:DeployAaveVaultScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi --verify -vvvv
 
 deploy_mock_usdc JSON_RPC_URL SENDER:
     echo "Deploying MockUSDC"
-    forge script script/000_deploy_mock_usdc.s.sol:DeployMockUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+    forge script script/000_deploy_mock_usdc.s.sol:DeployMockUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi --verify -vvvv
 
 deploy_local:
     echo "Deploying contracts locally"

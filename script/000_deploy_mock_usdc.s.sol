@@ -23,6 +23,8 @@ contract DeployMockUSDCScript is BaseScript {
 
         mockUSDC = new MockUSDC();
 
+        mockUSDC.mint(0xCA78C111CF45FE0B8D4F3918632DDc33917Af882, 100_000_000 ether); // Mint 1 million USDC to 0xCA78C111CF45FE0B8D4F3918632DDc33917Af882
+
         vm.stopBroadcast();
 
         vm.saveDeploymentAddress(Constants.MOCK_USDC, address(mockUSDC));

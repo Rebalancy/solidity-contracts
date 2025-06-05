@@ -8,7 +8,9 @@ contract MockUSDC is ERC20 {
     string USDC_NAME = "USD Coin";
     string USDC_SYMBOL = "USDC";
 
-    constructor() ERC20(USDC_NAME, USDC_SYMBOL) {}
+    constructor() ERC20(USDC_NAME, USDC_SYMBOL) {
+        
+    }
 
     function decimals() public view virtual override returns (uint8) {
         return USDC_DECIMALS;
