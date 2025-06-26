@@ -16,6 +16,10 @@ contract MintMockUSDCScript is BaseScript {
 
     MockUSDC public mockUSDC;
 
+    constructor() BaseScript() {
+        _loadConfiguration();
+    }
+
     function run() public {
         console2.log("Minting USDC tokens");
 
