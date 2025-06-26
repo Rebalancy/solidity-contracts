@@ -16,7 +16,7 @@ library ConfigurationBaseSepolia {
 
         return Configuration.ConfigValues({
             UNDERLYING_TOKEN: mockUSDC, // Mock USDC address from deployment
-            AGENT_ADDRESS: 0x23BF95De9F90338F973056351C8Cd2CB78cbe52f,
+            AGENT_ADDRESS: 0xd7447e12D4Da4a0aa7ca4B0D270f4687683C3b0C, // AI Agent address
             VAULT_NAME: "Aave Rebalancer",
             VAULT_SYMBOL: "AAVE-RB"
         });
