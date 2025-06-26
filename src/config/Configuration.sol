@@ -30,7 +30,7 @@ library Configuration {
         if (networkIdInt == Constants.LOCAL_NETWORK) {
             return ConfigurationLocal.getConfig(_vm);
         }
-        
+
         if (networkIdInt == Constants.ETHEREUM_MAINNET_NETWORK) {
             return ConfigurationEthereumMainnet.getConfig(_vm);
         }

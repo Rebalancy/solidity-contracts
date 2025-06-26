@@ -16,7 +16,7 @@ contract BaseScript is Script {
 
     constructor() {
         console2.log("BaseScript Constructor: Loading Deployer Address");
-        
+
         deployer = vm.loadDeployerAddress();
 
         console2.log("Deployer Address: %s", deployer);
