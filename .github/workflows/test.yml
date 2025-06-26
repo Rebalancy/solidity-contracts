@@ -13,10 +13,6 @@ jobs:
     strategy:
       fail-fast: true
     
-    defaults:
-      run:
-        working-directory: ./contracts
-
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
