@@ -28,11 +28,11 @@ deploy_base_sepolia:
 # actions
 mint_usdc JSON_RPC_URL SENDER:
     echo "Minting Mock USDC"
-    forge script script/003_mint_usdc.s.sol:MintUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+    forge script script/002_mint_usdc.s.sol:MintMockUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
 
 deposit JSON_RPC_URL SENDER:
     echo "Making deposit to Aave Vault"
-    forge script script/002_deposit.s.sol:DepositScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+    forge script script/003_deposit.s.sol:DepositScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
 
 # anvil
 start_anvil:

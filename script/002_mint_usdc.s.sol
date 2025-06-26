@@ -10,7 +10,7 @@ import {Constants} from "@constants/Constants.sol";
 import {MockUSDC} from "@mocks/MockUSDC.sol";
 import {BaseScript} from "./BaseScript.s.sol";
 
-contract MintUSDCScript is BaseScript {
+contract MintMockUSDCScript is BaseScript {
     using DeployerUtils for Vm;
     using DeploymentUtils for Vm;
 
