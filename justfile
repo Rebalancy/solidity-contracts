@@ -20,7 +20,20 @@ deploy_base_sepolia:
     NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just deploy_mock_usdc $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
     sleep 10
     NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just deploy_aave_vault $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
-    
+    sleep 10
+    NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just mint_usdc $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
+    sleep 10
+    NETWORK_ID=$CHAIN_ID_BASE_SEPOLIA MNEMONIC=$MNEMONIC_TESTNET just deposit $RPC_URL_BASE_SEPOLIA $SENDER_TESTNET
+
+# actions
+mint_usdc JSON_RPC_URL SENDER:
+    echo "Minting Mock USDC"
+    forge script script/003_mint_usdc.s.sol:MintUSDCScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+
+deposit JSON_RPC_URL SENDER:
+    echo "Making deposit to Aave Vault"
+    forge script script/002_deposit.s.sol:DepositScript --rpc-url $JSON_RPC_URL --sender $SENDER --broadcast --ffi -vvvv
+
 # anvil
 start_anvil:
     echo "Starting Anvil"
