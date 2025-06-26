@@ -28,6 +28,8 @@ contract AaveVault is ERC4626 {
         ERC20(_name, _symbol)
     {
         AI_AGENT = _agentAddress;
+
+        // TODO: Creo que debo aprobar USDC para la derived address.
     }
 
     /*//////////////////////////////////////////////////////////////
