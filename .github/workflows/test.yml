@@ -12,6 +12,10 @@ jobs:
   check:
     strategy:
       fail-fast: true
+    
+    defaults:
+      run:
+        working-directory: ./contracts
 
     name: Foundry project
     runs-on: ubuntu-latest
@@ -22,6 +26,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
 
       - name: Show Forge version
         run: |
@@ -31,6 +37,9 @@ jobs:
         run: |
           forge fmt --check
         id: fmt
+
+      - name: Install dependencies
+        run: forge soldeer install
 
       - name: Run Forge build
         run: |
