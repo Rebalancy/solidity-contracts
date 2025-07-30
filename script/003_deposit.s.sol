@@ -26,26 +26,25 @@ contract DepositScript is BaseScript {
 
         vm.startBroadcast(deployer);
 
-        address mockUSDCAddress = vm.loadDeploymentAddress(Constants.MOCK_USDC);
+        address usdcAddress = config.UNDERLYING_TOKEN;
         address aaveVaultAddress = vm.loadDeploymentAddress(Constants.AAVE_VAULT);
 
-        require(mockUSDCAddress != address(0), "MockUSDC not deployed");
         require(aaveVaultAddress != address(0), "AaveVault not deployed");
 
-        IERC20Metadata mockUSDC = IERC20Metadata(mockUSDCAddress);
+        IERC20Metadata usdcTestnet = IERC20Metadata(usdcAddress);
         AaveVault aaveVault = AaveVault(aaveVaultAddress);
 
-        console2.log("MockUSDC Address: %s", address(mockUSDC));
+        console2.log("USDC testnet Address: %s", address(usdcTestnet));
         console2.log("AaveVault Address: %s", address(aaveVault));
 
         // Approve the AaveVault to spend MockUSDC
-        mockUSDC.approve(address(aaveVault), type(uint256).max);
+        usdcTestnet.approve(address(aaveVault), type(uint256).max);
 
-        console2.log("Approved AaveVault to spend MockUSDC");
+        console2.log("Approved AaveVault to spend USDC testnet");
 
-        // Deposit 1000 MockUSDC into AaveVault
-        uint256 depositAmount = 100_000 * 10 ** mockUSDC.decimals();
-        console2.log("Depositing %s MockUSDC into AaveVault", depositAmount);
+        // Deposit 1000 USDC testnet into AaveVault
+        uint256 depositAmount = 1 ** usdcTestnet.decimals();
+        console2.log("Depositing %s USDC testnet into AaveVault", depositAmount);
         aaveVault.deposit(depositAmount, deployer);
 
         console2.log("Deposit successful");
