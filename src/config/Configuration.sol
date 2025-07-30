@@ -10,6 +10,7 @@ import {ConfigurationEthereumMainnet} from "./Configuration.Ethereum.sol";
 import {ConfigurationEthereumSepolia} from "./Configuration.EthereumSepolia.sol";
 import {ConfigurationBaseMainnet} from "./Configuration.Base.sol";
 import {ConfigurationBaseSepolia} from "./Configuration.BaseSepolia.sol";
+import {ConfigurationArbitrumSepolia} from "./Configuration.ArbitrumSepolia.sol";
 import {ConfigurationLocal} from "./Configuration.Local.sol";
 
 library Configuration {
@@ -45,6 +46,10 @@ library Configuration {
 
         if (networkIdInt == Constants.BASE_SEPOLIA_NETWORK) {
             return ConfigurationBaseSepolia.getConfig(_vm);
+        }
+
+        if (networkIdInt == Constants.ARBITRUM_SEPOLIA_NETWORK) {
+            return ConfigurationArbitrumSepolia.getConfig(_vm);
         }
 
         revert(string(abi.encodePacked("Configuration: network not supported ", networkId)));
