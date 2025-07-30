@@ -12,7 +12,7 @@ contract AaveVault is ERC4626 {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
-    address public immutable AI_AGENT;
+    address public AI_AGENT; // TODO: This has to be immutable
     uint256 public immutable MAX_TOTAL_DEPOSITS = 100_000_000 ether; // 100M
 
     uint256 public amountInvested;
@@ -91,5 +91,11 @@ contract AaveVault is ERC4626 {
         // TODO: Replace with if and revert instead of require
         require(msg.sender == AI_AGENT, "Only AI agent can call this function");
         _;
+    }
+
+    // TODO: Remove this. Only used for easy testing.
+    function setAgentAddress(address _agentAddress) external {
+        require(_agentAddress != address(0), "Invalid agent address");
+        AI_AGENT = _agentAddress;
     }
 }
