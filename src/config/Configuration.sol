@@ -21,6 +21,8 @@ library Configuration {
         address AGENT_ADDRESS;
         string VAULT_NAME;
         string VAULT_SYMBOL;
+        address POOL_ADDRESS;
+        address A_TOKEN_ADDRESS;
     }
 
     function load(Vm _vm) external view returns (ConfigValues memory) {

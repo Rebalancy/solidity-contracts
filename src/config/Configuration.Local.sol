@@ -18,7 +18,9 @@ library ConfigurationLocal {
             UNDERLYING_TOKEN: mockUSDC, // Mock USDC address from deployment
             AGENT_ADDRESS: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
             VAULT_NAME: "Aave Rebalancer",
-            VAULT_SYMBOL: "AAVE-RB"
+            VAULT_SYMBOL: "AAVE-RB",
+            POOL_ADDRESS: address(0),
+            A_TOKEN_ADDRESS: address(0)
         });
     }
 }
