@@ -5,11 +5,13 @@ import {console2} from "forge-std/console2.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 import {IERC20Metadata} from "@openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {DeploymentUtils} from "@utils/DeploymentUtils.sol";
 import {DeployerUtils} from "@utils/DeployerUtils.sol";
 import {Constants} from "@constants/Constants.sol";
 
+import {IAavePool} from "../src/interfaces/IAavePool.sol";
 import {AaveVault} from "../src/AaveVault.sol";
 import {BaseScript} from "./BaseScript.s.sol";
 
@@ -33,7 +35,14 @@ contract DeployAaveVaultScript is BaseScript {
         console2.log("Underlying Token Name %s", underlyingToken.name());
         console2.log("Underlying Token Symbol %s", underlyingToken.symbol());
 
-        aaveVault = new AaveVault(underlyingToken, config.AGENT_ADDRESS, config.VAULT_NAME, config.VAULT_SYMBOL);
+        aaveVault = new AaveVault(
+            underlyingToken,
+            config.AGENT_ADDRESS,
+            IAavePool(config.POOL_ADDRESS),
+            IERC20(config.A_TOKEN_ADDRESS),
+            config.VAULT_NAME,
+            config.VAULT_SYMBOL
+        );
 
         vm.stopBroadcast();
 
