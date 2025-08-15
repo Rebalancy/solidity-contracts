@@ -15,7 +15,8 @@ import {
     InvalidUnderlyingAddress,
     InvalidAavePoolAddress,
     InvalidATokenAddress,
-    NotEnoughAssetsToWithdraw
+    NotEnoughAssetsToWithdraw,
+    NotEnoughLiquidity
 } from "./Errors.sol";
 
 import {console} from "forge-std/console.sol";
@@ -118,7 +119,6 @@ contract AaveVault is ERC4626 {
     /*//////////////////////////////////////////////////////////////
                             AGENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    // TODO: Pensar en un mejor nombre, no se si podria ser invested
     function withdrawForCrossChainAllocation(uint256 _amount) external onlyAIAgent {
         if (_amount == 0) {
             revert InvalidAmount();
@@ -129,23 +129,28 @@ contract AaveVault is ERC4626 {
             revert NotEnoughAssetsToInvest();
         }
 
+        // Check the vault has enough aTokens
+        if (_amount > A_TOKEN.balanceOf(address(this))) {
+            revert NotEnoughLiquidity();
+        }
+
+        // Withdraw from AAVE
+        uint256 amountWithdrawn = AAVE_POOL.withdraw(address(asset()), _amount, address(this));
         // recibo una cantidad/amount
         // reviso si toda esa cantidad esta disponible
         // en caso de no estar todo disponible tengo que hacer withdraw de X amount
         // no totalmente porque ya sabe lo que tiene que sacar de aave ....
 
         // de cierta forma poner la logica de los idle assets
-        // tengo que revisar el balance de aave tokens
-        // if (_amount + amountInvested > MAX_TOTAL_DEPOSITS) {
-        //     revert MaximumInvestmentExceeded();
-        // }
 
-        // Realmente no creo que sea posible que existan idle assets
+        // Realmente no creo que sea posible que existan idle assets o si? no...... pero que tal y en AAVE te regresan tokens o algo
 
-        //     // Transfer the underlying asset to the agent for investment
-        //     IERC20(asset()).safeTransferFrom(address(this), msg.sender, _amount);
+        // Transfer the underlying asset to the agent for investment
+        IERC20(asset()).safeTransferFrom(address(this), msg.sender, amountWithdrawn);
 
-        //     amountInvested += _amount;
+        // TODO: Esto no puede solo aumentar asi....
+        // Tal vez pasar el cross chain state?
+        crossChainInvestedAssets += _amount;
 
         //     emit AssetsInvested(msg.sender, _amount, amountInvested);
         // }

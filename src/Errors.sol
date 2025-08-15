@@ -9,3 +9,4 @@ error InvalidUnderlyingAddress();
 error InvalidAavePoolAddress();
 error InvalidATokenAddress();
 error NotEnoughAssetsToWithdraw();
+error NotEnoughLiquidity();
