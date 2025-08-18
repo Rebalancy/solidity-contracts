@@ -43,7 +43,7 @@ contract AaveVault is ERC4626 {
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
     event AssetsInvested(address indexed agent, uint256 amount, uint256 totalInvested);
-    event YieldHarvested(address indexed agent, uint256 yieldAmount, uint256 withdrawnAmount); // TODO: Analyze this
+    event CrossChainBalanceUpdated(uint256 aTokenBalanceBefore, uint256 aTokenBalanceAfter);
     event AutoInvested(uint256 amountInvested, uint256 aTokenBalanceAfter);
 
     constructor(
@@ -88,6 +88,22 @@ contract AaveVault is ERC4626 {
         return assetsNotInvested + assetsInvestedInAave + assetsInvestedCrossChain;
     }
 
+    function deposit(uint256, address) public virtual override returns (uint256) {
+        revert("Not implemented, use depositWithExtraInfoViaSignature instead");
+    }
+
+    function depositWithExtraInfoViaSignature(uint256 assets, address receiver) public virtual returns (uint256) {
+        uint256 maxAssets = maxDeposit(receiver);
+        if (assets > maxAssets) {
+            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
+        }
+
+        uint256 shares = previewDeposit(assets);
+        _deposit(_msgSender(), receiver, assets, shares);
+
+        return shares;
+    }
+
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
         super._deposit(caller, receiver, assets, shares);
 
@@ -119,51 +135,46 @@ contract AaveVault is ERC4626 {
     /*//////////////////////////////////////////////////////////////
                             AGENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function withdrawForCrossChainAllocation(uint256 _amount) external onlyAIAgent {
-        if (_amount == 0) {
+
+    function withdrawForCrossChainAllocation(uint256 _amountToWithdraw, uint256 _crossChainATokenBalance)
+        external
+        onlyAIAgent
+    {
+        if (_amountToWithdraw == 0) {
             revert InvalidAmount();
         }
 
         // Check if the vault has enough assets available
-        if (_amount > getAvailableAssets()) {
+        if (_amountToWithdraw > getAvailableAssets()) {
             revert NotEnoughAssetsToInvest();
         }
 
         // Check the vault has enough aTokens
-        if (_amount > A_TOKEN.balanceOf(address(this))) {
+        if (_amountToWithdraw > A_TOKEN.balanceOf(address(this))) {
             revert NotEnoughLiquidity();
         }
 
         // Withdraw from AAVE
-        uint256 amountWithdrawn = AAVE_POOL.withdraw(address(asset()), _amount, address(this));
-        // recibo una cantidad/amount
-        // reviso si toda esa cantidad esta disponible
-        // en caso de no estar todo disponible tengo que hacer withdraw de X amount
-        // no totalmente porque ya sabe lo que tiene que sacar de aave ....
-
-        // de cierta forma poner la logica de los idle assets
-
-        // Realmente no creo que sea posible que existan idle assets o si? no...... pero que tal y en AAVE te regresan tokens o algo
+        uint256 amountWithdrawn = AAVE_POOL.withdraw(address(asset()), _amountToWithdraw, address(this));
 
         // Transfer the underlying asset to the agent for investment
         IERC20(asset()).safeTransferFrom(address(this), msg.sender, amountWithdrawn);
 
-        // TODO: Esto no puede solo aumentar asi....
-        // Tal vez pasar el cross chain state?
-        crossChainInvestedAssets += _amount;
+        crossChainInvestedAssets = amountWithdrawn + _crossChainATokenBalance;
 
-        //     emit AssetsInvested(msg.sender, _amount, amountInvested);
-        // }
+        emit AssetsInvested(msg.sender, _amountToWithdraw, crossChainInvestedAssets);
     }
 
-    // function updateCrossChainATokenBalances(uint256 _yieldAmount) external onlyAIAgent {
-    //     if (_yieldAmount == 0) {
-    //         revert InvalidAmount();
-    //     }
+    function updateCrossChainBalance(uint256 _crossChainATokenBalance) external onlyAIAgent {
+        if (_crossChainATokenBalance == 0) {
+            revert InvalidAmount();
+        }
 
-    //     amountInvested += _yieldAmount;
+        uint256 crosschainAssetsBefore = crossChainInvestedAssets;
+        crossChainInvestedAssets = _crossChainATokenBalance;
 
-    //     emit YieldHarvested(msg.sender, _yieldAmount, amountInvested);
+        emit CrossChainBalanceUpdated(crosschainAssetsBefore, _crossChainATokenBalance);
+    }
 
     /*//////////////////////////////////////////////////////////////
                          INTERNAL FUNCTIONS
