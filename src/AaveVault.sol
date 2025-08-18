@@ -23,7 +23,9 @@ import {
     NotEnoughLiquidity,
     SignatureExpired,
     BadNonce,
-    InvalidSignature
+    InvalidSignature,
+    InvalidAssetAddress,
+    InvalidReceiverAddress
 } from "./Errors.sol";
 
 import {console} from "forge-std/console.sol";
@@ -51,6 +53,8 @@ contract AaveVault is ERC4626, EIP712 {
         uint256 balance; // cross-chain balance in aTokens
         uint256 nonce; // anti-replay
         uint256 deadline; // expiration (unix timestamp)
+        uint256 assets; // assets to deposit in the vault
+        address receiver; // receiver of the shares
     }
 
     string private constant SIGNING_DOMAIN = "AaveVault";
@@ -129,6 +133,14 @@ contract AaveVault is ERC4626, EIP712 {
         }
         if (_snapshot.nonce != crossChainBalanceNonce) {
             revert BadNonce();
+        }
+
+        if (_snapshot.assets != _assets) {
+            revert InvalidAssetAddress();
+        }
+
+        if (_snapshot.receiver != _receiver) {
+            revert InvalidReceiverAddress();
         }
 
         // 2) Hash EIP-712 + verify signature
@@ -259,7 +271,16 @@ contract AaveVault is ERC4626, EIP712 {
     //////////////////////////////////////////////////////////////*/
     function _hashSnapshot(CrossChainBalanceSnapshot memory _snapshot) internal view returns (bytes32) {
         return _hashTypedDataV4(
-            keccak256(abi.encode(SNAPSHOT_TYPEHASH, _snapshot.balance, _snapshot.nonce, _snapshot.deadline))
+            keccak256(
+                abi.encode(
+                    SNAPSHOT_TYPEHASH,
+                    _snapshot.balance,
+                    _snapshot.nonce,
+                    _snapshot.deadline,
+                    _snapshot.assets,
+                    _snapshot.receiver
+                )
+            )
         );
     }
 

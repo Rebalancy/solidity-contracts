@@ -13,3 +13,5 @@ error NotEnoughLiquidity();
 error SignatureExpired();
 error BadNonce();
 error InvalidSignature();
+error InvalidReceiverAddress();
+error InvalidAssetAddress();
