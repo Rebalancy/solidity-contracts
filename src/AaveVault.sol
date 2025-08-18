@@ -25,7 +25,9 @@ import {
     BadNonce,
     InvalidSignature,
     InvalidAssetAddress,
-    InvalidReceiverAddress
+    InvalidReceiverAddress,
+    InvalidAgentCaller,
+    FutureDepositsRequireExtraInfoViaSignature
 } from "./Errors.sol";
 
 import {console} from "forge-std/console.sol";
@@ -60,8 +62,9 @@ contract AaveVault is ERC4626, EIP712 {
     string private constant SIGNING_DOMAIN = "AaveVault";
     string private constant SIGNING_DOMAIN_VERSION = "1";
 
-    bytes32 public constant SNAPSHOT_TYPEHASH =
-        keccak256("CrossChainBalanceSnapshot(uint256 balance,uint256 nonce,uint256 deadline)");
+    bytes32 public constant SNAPSHOT_TYPEHASH = keccak256(
+        "CrossChainBalanceSnapshot(uint256 balance,uint256 nonce,uint256 deadline,uint256 assets,address receiver)"
+    );
 
     uint256 public crossChainBalanceNonce;
 
@@ -114,8 +117,12 @@ contract AaveVault is ERC4626, EIP712 {
         return assetsNotInvested + assetsInvestedInAave + assetsInvestedCrossChain;
     }
 
-    function deposit(uint256, address) public virtual override returns (uint256) {
-        revert("Not implemented, use depositWithExtraInfoViaSignature instead");
+    /// @dev Deposit function that allows deposits only if there are no cross-chain invested assets.
+    function deposit(uint256 _assets, address _receiver) public virtual override returns (uint256) {
+        if (crossChainInvestedAssets > 0) {
+            revert FutureDepositsRequireExtraInfoViaSignature();
+        }
+        return super.deposit(_assets, _receiver);
     }
 
     function depositWithExtraInfoViaSignature(
@@ -124,6 +131,10 @@ contract AaveVault is ERC4626, EIP712 {
         CrossChainBalanceSnapshot calldata _snapshot,
         bytes calldata signature
     ) public virtual returns (uint256) {
+        if (_receiver != msg.sender) {
+            revert InvalidReceiverAddress();
+        }
+
         // 1) Validate snapshot
         if (block.timestamp > _snapshot.deadline) {
             revert SignatureExpired();
@@ -166,6 +177,14 @@ contract AaveVault is ERC4626, EIP712 {
         _deposit(_msgSender(), _receiver, _assets, shares);
 
         return shares;
+    }
+
+    function maxDeposit(address) public view override returns (uint256) {
+        uint256 ta = totalAssets();
+        if (ta >= MAX_TOTAL_DEPOSITS) {
+            return 0;
+        }
+        return MAX_TOTAL_DEPOSITS - ta;
     }
 
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
@@ -222,7 +241,7 @@ contract AaveVault is ERC4626, EIP712 {
         uint256 amountWithdrawn = AAVE_POOL.withdraw(address(asset()), _amountToWithdraw, address(this));
 
         // Transfer the underlying asset to the agent for investment
-        IERC20(asset()).safeTransferFrom(address(this), msg.sender, amountWithdrawn);
+        IERC20(asset()).safeTransfer(msg.sender, amountWithdrawn);
 
         crossChainInvestedAssets = amountWithdrawn + _crossChainATokenBalance;
 
@@ -261,7 +280,7 @@ contract AaveVault is ERC4626, EIP712 {
     modifier onlyAIAgent() {
         // Check if the caller is the AI agent
         if (msg.sender != AI_AGENT) {
-            revert("Only AI agent can call this function");
+            revert InvalidAgentCaller();
         }
         _;
     }

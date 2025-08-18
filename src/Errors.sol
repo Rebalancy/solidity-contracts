@@ -15,3 +15,5 @@ error BadNonce();
 error InvalidSignature();
 error InvalidReceiverAddress();
 error InvalidAssetAddress();
+error InvalidAgentCaller();
+error FutureDepositsRequireExtraInfoViaSignature();
