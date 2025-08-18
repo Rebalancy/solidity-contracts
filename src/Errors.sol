@@ -10,3 +10,6 @@ error InvalidAavePoolAddress();
 error InvalidATokenAddress();
 error NotEnoughAssetsToWithdraw();
 error NotEnoughLiquidity();
+error SignatureExpired();
+error BadNonce();
+error InvalidSignature();

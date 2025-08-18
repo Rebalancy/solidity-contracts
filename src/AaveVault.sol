@@ -6,6 +6,10 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/utils/math/Math.sol";
+import {ECDSA} from "@openzeppelin/utils/cryptography/ECDSA.sol";
+import {EIP712} from "@openzeppelin/utils/cryptography/EIP712.sol";
+import {SignatureChecker} from "@openzeppelin/utils/cryptography/SignatureChecker.sol";
+
 import {IAavePool} from "./interfaces/IAavePool.sol";
 import {
     InvalidAmount,
@@ -16,12 +20,15 @@ import {
     InvalidAavePoolAddress,
     InvalidATokenAddress,
     NotEnoughAssetsToWithdraw,
-    NotEnoughLiquidity
+    NotEnoughLiquidity,
+    SignatureExpired,
+    BadNonce,
+    InvalidSignature
 } from "./Errors.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract AaveVault is ERC4626 {
+contract AaveVault is ERC4626, EIP712 {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
@@ -39,6 +46,21 @@ contract AaveVault is ERC4626 {
 
     uint256 public crossChainInvestedAssets;
 
+    // ------- Snapshot EIP-712 -------
+    struct CrossChainBalanceSnapshot {
+        uint256 balance; // cross-chain balance in aTokens
+        uint256 nonce; // anti-replay
+        uint256 deadline; // expiration (unix timestamp)
+    }
+
+    string private constant SIGNING_DOMAIN = "AaveVault";
+    string private constant SIGNING_DOMAIN_VERSION = "1";
+
+    bytes32 public constant SNAPSHOT_TYPEHASH =
+        keccak256("CrossChainBalanceSnapshot(uint256 balance,uint256 nonce,uint256 deadline)");
+
+    uint256 public crossChainBalanceNonce;
+
     /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -53,7 +75,7 @@ contract AaveVault is ERC4626 {
         IERC20 _aToken,
         string memory _name,
         string memory _symbol
-    ) ERC4626(_underlying) ERC20(_name, _symbol) {
+    ) ERC4626(_underlying) ERC20(_name, _symbol) EIP712(SIGNING_DOMAIN, SIGNING_DOMAIN_VERSION) {
         if (_agentAddress == address(0)) {
             revert InvalidAgentAddress();
         }
@@ -92,14 +114,44 @@ contract AaveVault is ERC4626 {
         revert("Not implemented, use depositWithExtraInfoViaSignature instead");
     }
 
-    function depositWithExtraInfoViaSignature(uint256 assets, address receiver) public virtual returns (uint256) {
-        uint256 maxAssets = maxDeposit(receiver);
-        if (assets > maxAssets) {
-            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
+    function depositWithExtraInfoViaSignature(
+        uint256 _assets,
+        address _receiver,
+        CrossChainBalanceSnapshot calldata _snapshot,
+        bytes calldata signature
+    ) public virtual returns (uint256) {
+        // 1) Validate snapshot
+        if (block.timestamp > _snapshot.deadline) {
+            revert SignatureExpired();
+        }
+        if (_snapshot.balance == 0) {
+            revert InvalidAmount();
+        }
+        if (_snapshot.nonce != crossChainBalanceNonce) {
+            revert BadNonce();
         }
 
-        uint256 shares = previewDeposit(assets);
-        _deposit(_msgSender(), receiver, assets, shares);
+        // 2) Hash EIP-712 + verify signature
+        bytes32 digest = _hashSnapshot(_snapshot);
+        if (!SignatureChecker.isValidSignatureNow(AI_AGENT, digest, signature)) {
+            revert InvalidSignature();
+        }
+
+        // 3) Increment nonce to prevent replay attacks
+        unchecked {
+            crossChainBalanceNonce++;
+        }
+
+        _updateCrossChainBalance(_snapshot.balance);
+
+        // 4) Normal deposit logic
+        uint256 maxAssets = maxDeposit(_receiver);
+        if (_assets > maxAssets) {
+            revert ERC4626ExceededMaxDeposit(_receiver, _assets, maxAssets);
+        }
+
+        uint256 shares = previewDeposit(_assets);
+        _deposit(_msgSender(), _receiver, _assets, shares);
 
         return shares;
     }
@@ -166,6 +218,10 @@ contract AaveVault is ERC4626 {
     }
 
     function updateCrossChainBalance(uint256 _crossChainATokenBalance) external onlyAIAgent {
+        _updateCrossChainBalance(_crossChainATokenBalance);
+    }
+
+    function _updateCrossChainBalance(uint256 _crossChainATokenBalance) internal {
         if (_crossChainATokenBalance == 0) {
             revert InvalidAmount();
         }
@@ -196,6 +252,15 @@ contract AaveVault is ERC4626 {
             revert("Only AI agent can call this function");
         }
         _;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        EIP-712 SNAPSHOT FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+    function _hashSnapshot(CrossChainBalanceSnapshot memory _snapshot) internal view returns (bytes32) {
+        return _hashTypedDataV4(
+            keccak256(abi.encode(SNAPSHOT_TYPEHASH, _snapshot.balance, _snapshot.nonce, _snapshot.deadline))
+        );
     }
 
     /*//////////////////////////////////////////////////////////////
