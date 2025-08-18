@@ -14,6 +14,6 @@ error SignatureExpired();
 error BadNonce();
 error InvalidSignature();
 error InvalidReceiverAddress();
-error InvalidAssetAddress();
+error InvalidAssetsAmount();
 error InvalidAgentCaller();
 error FutureDepositsRequireExtraInfoViaSignature();

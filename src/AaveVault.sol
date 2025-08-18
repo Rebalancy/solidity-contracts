@@ -24,7 +24,7 @@ import {
     SignatureExpired,
     BadNonce,
     InvalidSignature,
-    InvalidAssetAddress,
+    InvalidAssetsAmount,
     InvalidReceiverAddress,
     InvalidAgentCaller,
     FutureDepositsRequireExtraInfoViaSignature
@@ -147,7 +147,7 @@ contract AaveVault is ERC4626, EIP712 {
         }
 
         if (_snapshot.assets != _assets) {
-            revert InvalidAssetAddress();
+            revert InvalidAssetsAmount();
         }
 
         if (_snapshot.receiver != _receiver) {
@@ -253,10 +253,6 @@ contract AaveVault is ERC4626, EIP712 {
     }
 
     function _updateCrossChainBalance(uint256 _crossChainATokenBalance) internal {
-        if (_crossChainATokenBalance == 0) {
-            revert InvalidAmount();
-        }
-
         uint256 crosschainAssetsBefore = crossChainInvestedAssets;
         crossChainInvestedAssets = _crossChainATokenBalance;
 
