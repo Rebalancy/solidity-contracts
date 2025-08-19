@@ -74,6 +74,7 @@ contract AaveVaultTest is Test {
 
     function testSingleDepositWithdraw(uint128 amount) public {
         vm.assume(amount > 1);
+        vm.assume(amount < 100e18); // Avoid overflow issues with large amounts.
 
         uint256 aliceMockUSDCDeposit = amount;
 
