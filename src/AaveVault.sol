@@ -71,6 +71,7 @@ contract AaveVault is ERC4626, EIP712 {
     event AssetsInvested(address indexed agent, uint256 amount, uint256 totalInvested);
     event CrossChainBalanceUpdated(uint256 aTokenBalanceBefore, uint256 aTokenBalanceAfter);
     event AutoInvested(uint256 amountInvested, uint256 aTokenBalanceAfter);
+    event CrossChainFundsReturned(uint256 amountReturned, uint256 newCrossChainBalance, uint256 aTokenAfter);
 
     constructor(
         IERC20 _underlying,
@@ -265,9 +266,21 @@ contract AaveVault is ERC4626, EIP712 {
         emit CrossChainBalanceUpdated(crosschainAssetsBefore, _crossChainATokenBalance);
     }
 
+    function returnFunds(uint256 amountReturned, uint256 newCrossChainATokenBalance) external onlyAgent {
+        if (amountReturned > 0) {
+            IERC20(asset()).safeTransferFrom(msg.sender, address(this), amountReturned);
+            AAVE_POOL.supply(address(asset()), amountReturned, address(this), 0);
+        }
+
+        _updateCrossChainBalance(newCrossChainATokenBalance);
+
+        emit CrossChainFundsReturned(amountReturned, newCrossChainATokenBalance, A_TOKEN.balanceOf(address(this)));
+    }
+
     /*//////////////////////////////////////////////////////////////
                          INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
     function getAvailableAssets() internal view returns (uint256) {
         uint256 assetsNotInvested = IERC20(asset()).balanceOf(address(this));
         uint256 assetsInvestedInAave = A_TOKEN.balanceOf(address(this)); // 1 aToken ≈ 1 asset
