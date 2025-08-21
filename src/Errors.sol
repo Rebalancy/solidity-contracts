@@ -17,3 +17,4 @@ error InvalidReceiverAddress();
 error InvalidAssetsAmount();
 error InvalidAgentCaller();
 error FutureDepositsRequireExtraInfoViaSignature();
+error CannotReportCrossChainBalanceWhenNoAssetsInvested();

@@ -6,14 +6,12 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/utils/math/Math.sol";
-import {ECDSA} from "@openzeppelin/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/utils/cryptography/EIP712.sol";
 import {SignatureChecker} from "@openzeppelin/utils/cryptography/SignatureChecker.sol";
-
+import {IERC20Metadata} from "@openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 import {IAavePool} from "./interfaces/IAavePool.sol";
 import {
     InvalidAmount,
-    MaximumInvestmentExceeded,
     NotEnoughAssetsToInvest,
     InvalidAgentAddress,
     InvalidUnderlyingAddress,
@@ -27,10 +25,9 @@ import {
     InvalidAssetsAmount,
     InvalidReceiverAddress,
     InvalidAgentCaller,
-    FutureDepositsRequireExtraInfoViaSignature
+    FutureDepositsRequireExtraInfoViaSignature,
+    CannotReportCrossChainBalanceWhenNoAssetsInvested
 } from "./Errors.sol";
-
-import {console} from "forge-std/console.sol";
 
 contract AaveVault is ERC4626, EIP712 {
     using SafeERC20 for IERC20;
@@ -40,7 +37,7 @@ contract AaveVault is ERC4626, EIP712 {
     address public AI_AGENT; // TODO: This has to be immutable
 
     /// @dev Maximum total deposits allowed in the vault.
-    uint256 public immutable MAX_TOTAL_DEPOSITS = 100_000_000 ether; // 100M
+    uint256 public immutable MAX_TOTAL_DEPOSITS = 100_000_000 * 1e6; // 100M
 
     /// @dev Aave v3 Pool.
     IAavePool public immutable AAVE_POOL;
@@ -110,6 +107,10 @@ contract AaveVault is ERC4626, EIP712 {
     /*//////////////////////////////////////////////////////////////
                         OVERRIDE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    function decimals() public view virtual override(ERC4626) returns (uint8) {
+        return IERC20Metadata(asset()).decimals();
+    }
+
     function totalAssets() public view virtual override returns (uint256) {
         uint256 assetsNotInvested = IERC20(asset()).balanceOf(address(this));
         uint256 assetsInvestedCrossChain = getCrossChainInvestedAssets();
@@ -131,6 +132,9 @@ contract AaveVault is ERC4626, EIP712 {
         CrossChainBalanceSnapshot calldata _snapshot,
         bytes calldata signature
     ) public virtual returns (uint256) {
+        if (crossChainInvestedAssets == 0) {
+            revert CannotReportCrossChainBalanceWhenNoAssetsInvested();
+        }
         if (_receiver != msg.sender) {
             revert InvalidReceiverAddress();
         }
@@ -190,10 +194,10 @@ contract AaveVault is ERC4626, EIP712 {
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
         super._deposit(caller, receiver, assets, shares);
 
-        uint256 idle_underlying = IERC20(asset()).balanceOf(address(this));
-        if (idle_underlying > 0) {
-            AAVE_POOL.supply(address(asset()), idle_underlying, address(this), 0); // referralCode = 0
-            emit AutoInvested(idle_underlying, A_TOKEN.balanceOf(address(this)));
+        uint256 idleUnderlying = IERC20(asset()).balanceOf(address(this));
+        if (idleUnderlying > 0) {
+            AAVE_POOL.supply(address(asset()), idleUnderlying, address(this), 0); // referralCode = 0
+            emit AutoInvested(idleUnderlying, A_TOKEN.balanceOf(address(this)));
         }
     }
 
@@ -202,12 +206,11 @@ contract AaveVault is ERC4626, EIP712 {
         virtual
         override
     {
-        uint256 idle_underlying = IERC20(asset()).balanceOf(address(this));
-        console.log("Idle Underlying: %s", idle_underlying);
-        if (idle_underlying < assets) {
-            uint256 need = assets - idle_underlying;
+        uint256 idleUnderlying = IERC20(asset()).balanceOf(address(this));
+        if (idleUnderlying < assets) {
+            uint256 need = assets - idleUnderlying;
             uint256 got = AAVE_POOL.withdraw(address(asset()), need, address(this));
-            if (idle_underlying + got < assets) {
+            if (idleUnderlying + got < assets) {
                 revert NotEnoughAssetsToWithdraw();
             }
         }
@@ -221,7 +224,8 @@ contract AaveVault is ERC4626, EIP712 {
 
     function withdrawForCrossChainAllocation(uint256 _amountToWithdraw, uint256 _crossChainATokenBalance)
         external
-        onlyAIAgent
+        onlyAgent
+        returns (uint256)
     {
         if (_amountToWithdraw == 0) {
             revert InvalidAmount();
@@ -246,9 +250,11 @@ contract AaveVault is ERC4626, EIP712 {
         crossChainInvestedAssets = amountWithdrawn + _crossChainATokenBalance;
 
         emit AssetsInvested(msg.sender, _amountToWithdraw, crossChainInvestedAssets);
+
+        return amountWithdrawn;
     }
 
-    function updateCrossChainBalance(uint256 _crossChainATokenBalance) external onlyAIAgent {
+    function updateCrossChainBalance(uint256 _crossChainATokenBalance) external onlyAgent {
         _updateCrossChainBalance(_crossChainATokenBalance);
     }
 
@@ -273,7 +279,7 @@ contract AaveVault is ERC4626, EIP712 {
         return crossChainInvestedAssets;
     }
 
-    modifier onlyAIAgent() {
+    modifier onlyAgent() {
         // Check if the caller is the AI agent
         if (msg.sender != AI_AGENT) {
             revert InvalidAgentCaller();
