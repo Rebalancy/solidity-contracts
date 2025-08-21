@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import {console2} from "forge-std/console2.sol";
-import "forge-std/Vm.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 /*
  * @title DeploymentUtils
