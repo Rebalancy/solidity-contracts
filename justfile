@@ -53,6 +53,10 @@ test_unit:
     echo "Running unit tests"
     forge test --match-path "test/unit/**/*.sol" --rpc-url $RPC_URL_ETHEREUM_MAINNET -vvvv
 
+test_fork:
+    echo "Running fork tests"
+    forge test --match-path "test/fork/**/*.sol" --fork-url $RPC_URL_ARBITRUM_SEPOLIA --fork-block-number 186031120 -vvvv 
+
 test_coverage:
     forge coverage --rpc-url $RPC_URL_ETHEREUM_MAINNET --report lcov 
     lcov --remove ./lcov.info --output-file ./lcov.info 'script' 'DeployerUtils.sol' 'DeploymentUtils.sol' 'config/*' 'helpers/*'
