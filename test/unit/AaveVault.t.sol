@@ -44,7 +44,7 @@ contract AaveVaultTest is Test {
         assertEq(aaveVault.AI_AGENT(), AI_AGENT);
         assertEq(address(aaveVault.AAVE_POOL()), address(mockAavePool));
         assertEq(address(aaveVault.A_TOKEN()), address(mockAToken));
-        assertEq(aaveVault.MAX_TOTAL_DEPOSITS(), 100_000_000 ether); // 100M
+        assertEq(aaveVault.MAX_TOTAL_DEPOSITS(), 100_000_000 * 1e6); // 100M
         assertEq(aaveVault.crossChainInvestedAssets(), 0);
         assertEq(aaveVault.decimals(), 6);
         assertEq(aaveVault.totalSupply(), 0);
@@ -53,7 +53,7 @@ contract AaveVaultTest is Test {
     }
 
     function testDeposit() public {
-        uint256 depositAmount = 100 ether;
+        uint256 depositAmount = 100e6;
 
         mockUSDC.mint(ALICE, depositAmount);
 
@@ -73,7 +73,7 @@ contract AaveVaultTest is Test {
 
     function testSingleDepositWithdraw(uint128 amount) public {
         vm.assume(amount > 1);
-        vm.assume(amount < 100e18); // Avoid overflow issues with large amounts.
+        vm.assume(amount < 100_000_000 * 1e6); // Avoid overflow issues with large amounts.
 
         uint256 aliceMockUSDCDeposit = amount;
 
@@ -111,6 +111,7 @@ contract AaveVaultTest is Test {
 
     function testSingleMintRedeem(uint128 amount) public {
         vm.assume(amount > 1);
+        vm.assume(amount < 100_000_000 * 1e6); // Avoid overflow issues with large amounts.
 
         uint256 aliceShareAmount = amount;
 
@@ -146,70 +147,70 @@ contract AaveVaultTest is Test {
     }
 
     function test_RevertWhen_DepositWithNotEnoughApproval() public {
-        mockUSDC.mint(ALICE, 0.5e18);
+        mockUSDC.mint(ALICE, 0.5e6);
 
         vm.startPrank(ALICE);
 
-        mockUSDC.approve(address(aaveVault), 0.5e18);
+        mockUSDC.approve(address(aaveVault), 0.5e6);
 
-        assertEq(mockUSDC.allowance(ALICE, address(aaveVault)), 0.5e18);
+        assertEq(mockUSDC.allowance(ALICE, address(aaveVault)), 0.5e6);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientAllowance.selector,
                 address(aaveVault), // spender
-                0.5e18, // allowance (since no approval)
-                1e18 // needed
+                0.5e6, // allowance (since no approval)
+                1e6 // needed
             )
         );
 
-        aaveVault.deposit(1e18, address(this));
+        aaveVault.deposit(1e6, address(this));
 
         vm.stopPrank();
     }
 
     function test_RevertWhen_WithdrawWithNotEnoughUnderlyingAmount() public {
-        mockUSDC.mint(ALICE, 0.5e18);
+        mockUSDC.mint(ALICE, 0.5e6);
 
         vm.startPrank(ALICE);
 
-        mockUSDC.approve(address(aaveVault), 0.5e18);
+        mockUSDC.approve(address(aaveVault), 0.5e6);
 
-        aaveVault.deposit(0.5e18, ALICE);
+        aaveVault.deposit(0.5e6, ALICE);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 ERC4626.ERC4626ExceededMaxWithdraw.selector,
                 ALICE, // owner
-                1e18, // amount to withdraw
-                0.5e18 // available (only share balance)
+                1e6, // amount to withdraw
+                0.5e6 // available (only share balance)
             )
         );
 
-        aaveVault.withdraw(1e18, ALICE, ALICE);
+        aaveVault.withdraw(1e6, ALICE, ALICE);
 
         vm.stopPrank();
     }
 
     function test_RevertWhen_RedeemWithNotEnoughShareAmount() public {
-        mockUSDC.mint(ALICE, 0.5e18);
+        mockUSDC.mint(ALICE, 0.5e6);
 
         vm.startPrank(ALICE);
 
-        mockUSDC.approve(address(aaveVault), 0.5e18);
+        mockUSDC.approve(address(aaveVault), 0.5e6);
 
-        aaveVault.deposit(0.5e18, ALICE);
+        aaveVault.deposit(0.5e6, ALICE);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 ERC4626.ERC4626ExceededMaxRedeem.selector,
                 ALICE, // owner
-                1e18, // amount to redeem
-                0.5e18 // available (only share balance)
+                1e6, // amount to redeem
+                0.5e6 // available (only share balance)
             )
         );
 
-        aaveVault.redeem(1e18, ALICE, ALICE);
+        aaveVault.redeem(1e6, ALICE, ALICE);
 
         vm.stopPrank();
     }
@@ -219,14 +220,14 @@ contract AaveVaultTest is Test {
             abi.encodeWithSelector(
                 ERC4626.ERC4626ExceededMaxWithdraw.selector,
                 ALICE, // owner
-                1e18, // amount to withdraw
+                1e6, // amount to withdraw
                 0 // available (since no share balance)
             )
         );
 
         vm.startPrank(ALICE);
 
-        aaveVault.withdraw(1e18, ALICE, ALICE);
+        aaveVault.withdraw(1e6, ALICE, ALICE);
 
         vm.stopPrank();
     }
@@ -236,14 +237,14 @@ contract AaveVaultTest is Test {
             abi.encodeWithSelector(
                 ERC4626.ERC4626ExceededMaxRedeem.selector,
                 ALICE, // owner
-                1e18, // amount to redeem
+                1e6, // amount to redeem
                 0 // available (since no share balance)
             )
         );
 
         vm.startPrank(ALICE);
 
-        aaveVault.redeem(1e18, ALICE, ALICE);
+        aaveVault.redeem(1e6, ALICE, ALICE);
 
         vm.stopPrank();
     }
@@ -254,13 +255,13 @@ contract AaveVaultTest is Test {
                 IERC20Errors.ERC20InsufficientAllowance.selector,
                 address(aaveVault), // spender
                 0, // allowance (since no approval)
-                1e18 // needed
+                1e6 // needed
             )
         );
 
         vm.startPrank(ALICE);
 
-        aaveVault.deposit(1e18, ALICE);
+        aaveVault.deposit(1e6, ALICE);
 
         vm.stopPrank();
     }
@@ -271,13 +272,13 @@ contract AaveVaultTest is Test {
                 IERC20Errors.ERC20InsufficientAllowance.selector,
                 address(aaveVault), // spender
                 0, // allowance (since no approval)
-                1e18 // needed
+                1e6 // needed
             )
         );
 
         vm.startPrank(ALICE);
 
-        aaveVault.mint(1e18, ALICE);
+        aaveVault.mint(1e6, ALICE);
 
         vm.stopPrank();
     }
