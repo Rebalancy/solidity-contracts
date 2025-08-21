@@ -21,7 +21,7 @@ contract DeployAaveVaultScript is BaseScript {
 
     AaveVault public aaveVault;
 
-    constructor() BaseScript() {
+    constructor() {
         _loadConfiguration();
     }
 

@@ -17,7 +17,7 @@ contract DepositScript is BaseScript {
     using DeployerUtils for Vm;
     using DeploymentUtils for Vm;
 
-    constructor() BaseScript() {
+    constructor() {
         _loadConfiguration();
     }
 

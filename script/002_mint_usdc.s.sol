@@ -16,7 +16,7 @@ contract MintMockUSDCScript is BaseScript {
 
     MockUSDC public mockUSDC;
 
-    constructor() BaseScript() {
+    constructor() {
         _loadConfiguration();
     }
 
