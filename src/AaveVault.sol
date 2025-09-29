@@ -317,12 +317,4 @@ contract AaveVault is ERC4626, EIP712 {
             )
         );
     }
-
-    /*//////////////////////////////////////////////////////////////
-                ONLY FOR TESTING FUNCTIONS PLEASE REMOVE
-    //////////////////////////////////////////////////////////////*/
-    function setAgentAddress(address _agentAddress) external {
-        require(_agentAddress != address(0), "Invalid agent address");
-        AI_AGENT = _agentAddress;
-    }
 }
