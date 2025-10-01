@@ -35,14 +35,7 @@ contract DeployAaveVaultScript is BaseScript {
         console2.log("Underlying Token Name %s", underlyingToken.name());
         console2.log("Underlying Token Symbol %s", underlyingToken.symbol());
 
-        aaveVault = new AaveVault(
-            underlyingToken,
-            config.AGENT_ADDRESS,
-            IAavePool(config.POOL_ADDRESS),
-            IERC20(config.A_TOKEN_ADDRESS),
-            config.VAULT_NAME,
-            config.VAULT_SYMBOL
-        );
+        aaveVault = new AaveVault(underlyingToken, config.VAULT_NAME, config.VAULT_SYMBOL);
 
         vm.stopBroadcast();
 
