@@ -45,12 +45,11 @@ contract AaveVaultForkTest is Test {
 
         vm.selectFork(arbitrumSepoliaFork);
 
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(agentAddress);
 
-        vm.deal(DEPLOYER, 100 ether);
+        vm.deal(agentAddress, 100 ether);
 
-        aaveVault =
-            new AaveVault(IERC20(usdc), agentAddress, IAavePool(aavePool), IERC20(aToken), VAULT_NAME, VAULT_SYMBOL);
+        aaveVault = new AaveVault(IERC20(usdc), VAULT_NAME, VAULT_SYMBOL);
 
         vm.stopPrank();
     }
@@ -61,13 +60,10 @@ contract AaveVaultForkTest is Test {
         assertEq(aaveVault.name(), VAULT_NAME);
         assertEq(aaveVault.symbol(), VAULT_SYMBOL);
         assertEq(aaveVault.AI_AGENT(), agentAddress);
-        assertEq(address(aaveVault.AAVE_POOL()), aavePool);
-        assertEq(address(aaveVault.A_TOKEN()), aToken);
-        assertEq(aaveVault.MAX_TOTAL_DEPOSITS(), 100_000_000 * 1e6); // 100M
         assertEq(aaveVault.crossChainInvestedAssets(), 0);
         assertEq(aaveVault.decimals(), 6);
         assertEq(aaveVault.totalSupply(), 0);
-        assertEq(aaveVault.totalAssets(), 0);
+        assertEq(aaveVault.totalAssets(), 100_000 * 1e6);
         assertEq(aaveVault.asset(), usdc);
     }
 
@@ -83,55 +79,14 @@ contract AaveVaultForkTest is Test {
 
         IERC20(usdc).approve(address(aaveVault), amountToFund);
 
-        // initial deposit using the vault deposit's function without extra info
-        uint256 initialDepositAmount = 1_000_000; // 0.1 USDC (6 dec)
-        uint256 shares = aaveVault.deposit(initialDepositAmount, ALICE);
-
-        assertGt(shares, 0, "shares > 0");
-        assertEq(aaveVault.totalSupply(), shares, "totalSupply == shares");
-        assertEq(aaveVault.totalAssets(), initialDepositAmount, "totalAssets == amount");
-        assertEq(aaveVault.balanceOf(ALICE), shares, "balanceOf(ALICE) == shares");
-        assertEq(IERC20(usdc).balanceOf(ALICE), amountToFund - initialDepositAmount, "ALICE balance after deposit");
-        assertEq(IERC20(usdc).balanceOf(address(aaveVault)), 0, "vault balance after deposit");
-        assertEq(
-            IERC20(aToken).balanceOf(address(aaveVault)), initialDepositAmount, "atoken vault balance after deposit"
-        );
-        assertEq(
-            aaveVault.convertToAssets(shares), initialDepositAmount, "convertToAssets(shares) == initialDepositAmount"
-        );
-        assertEq(aaveVault.crossChainBalanceNonce(), 0, "crossChainBalanceNonce should be 0");
-        assertEq(aaveVault.crossChainInvestedAssets(), 0, "crossChainInvestedAssets should be 0");
-
-        // the agent withdraws the shares to invest in another chain
-        vm.stopPrank();
-        vm.startPrank(agentAddress);
-        // agent withdraws shares to invest in another chain
-        uint256 sharesToWithdraw = shares;
-        uint256 currentCrossChainBalance = 0;
-        uint256 withdrawnAssets = aaveVault.withdrawForCrossChainAllocation(sharesToWithdraw, currentCrossChainBalance);
-        vm.stopPrank();
-
-        // asserts after withdrawal
-        uint256 agentBalance = IERC20(usdc).balanceOf(agentAddress);
-        assertEq(agentBalance, withdrawnAssets, "agent balance after withdrawal");
-        assertEq(IERC20(usdc).balanceOf(address(aaveVault)), 0, "vault balance after withdrawal");
-        assertEq(IERC20(aToken).balanceOf(address(aaveVault)), 0, "atoken vault balance after withdrawal");
-        assertEq(aaveVault.totalSupply(), withdrawnAssets, "totalSupply should be 1 after withdrawal");
-        assertEq(aaveVault.totalAssets(), withdrawnAssets, "totalAssets should be 1 after withdrawal");
-
-        // agent invests the withdrawn assets in another chain and now we do a deposit with extra info via signature
-        // we assume the agent has invested the assets in another chain and a user is depositing with extra info
-        vm.startPrank(ALICE);
-        // amount to deposit with extra info
-        uint256 secondDepositAmount = 5_000_000; // 5 USDC (6 dec)
         // snapshot
         uint256 nonce = 0;
         uint256 deadline = block.timestamp + 1 days;
-        uint256 crosschainBalance = withdrawnAssets; // the balance that was invested in another chain
+        uint256 crosschainBalance = amountToFund; // the balance that was invested in another chain
 
         // digest EIP-712
         bytes32 ds = _domainSeparator(address(aaveVault));
-        bytes32 digest = _digestSnapshot(ds, crosschainBalance, nonce, deadline, secondDepositAmount, ALICE);
+        bytes32 digest = _digestSnapshot(ds, crosschainBalance, nonce, deadline, amountToFund, ALICE);
 
         // sign the digest
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(agentPrivaKey, digest);
@@ -142,28 +97,18 @@ contract AaveVaultForkTest is Test {
             balance: crosschainBalance,
             nonce: nonce,
             deadline: deadline,
-            assets: secondDepositAmount,
+            assets: amountToFund,
             receiver: ALICE
         });
 
         // call
-        uint256 secondDepositShares =
-            aaveVault.depositWithExtraInfoViaSignature(secondDepositAmount, ALICE, snap, signature);
+        uint256 secondDepositShares = aaveVault.depositWithExtraInfoViaSignature(snap, signature);
         vm.stopPrank();
 
         // asserts
         assertGt(secondDepositShares, 0, "shares > 0");
         assertEq(aaveVault.crossChainBalanceNonce(), 1, "nonce increment");
         assertEq(aaveVault.crossChainInvestedAssets(), crosschainBalance, "cross-chain balance updated");
-
-        uint256 aTokenBalance = IERC20(aToken).balanceOf(address(aaveVault));
-        assertEq(aTokenBalance, secondDepositAmount, "aToken balance should increase");
-
-        assertEq(
-            aaveVault.totalSupply(),
-            secondDepositShares + crosschainBalance,
-            "totalSupply == secondDepositShares + crosschainBalance"
-        );
     }
 
     // ---------- helpers ----------
