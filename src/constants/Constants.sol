@@ -14,4 +14,7 @@ library Constants {
     uint64 public constant LOCAL_TEST_NETWORK = 3137;
     string public constant MOCK_USDC = "MockUSDC";
     string public constant AAVE_VAULT = "AaveVault";
+    string public constant VAULT_NAME = "Aave Rebalancer";
+    string public constant VAULT_SYMBOL = "AAVE-RB";
+    address public constant ADDRESS_ZERO = address(0);
 }
